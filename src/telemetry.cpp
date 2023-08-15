@@ -1,0 +1,1 @@
+//rtelemetry struct poz, hız, savaşan iha telemetri dokümantasyonu istenen veriler
