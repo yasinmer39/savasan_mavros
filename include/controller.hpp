@@ -18,6 +18,7 @@
 #include <mavros_msgs/GlobalPositionTarget.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <sensor_msgs/NavSatFix.h>
+#include <nav_msgs/Odometry.h>
 
 class MyClass{
 
@@ -37,12 +38,15 @@ class MyClass{
         void paramSet(double vel, ros::ServiceClient& set_mode_client, ros::ServiceClient& set_param_vel);
         void gpsCallback(const sensor_msgs::NavSatFix::ConstPtr& gps_msg);
         void state_cb(const mavros_msgs::State::ConstPtr& msg);
+        void odomCallback(const nav_msgs::Odometry::ConstPtr& odom_msg);
+        void metersToLatitudeLongitude(double originLat, double originLon, double xOffsetMeters, double yOffsetMeters, double& newLat, double& newLon);
 
         ros::Subscriber state_sub;
         ros::Subscriber gps_sub;
+        ros::Subscriber odom_sub;
         ros::Publisher attitude_pub;
-        ros::ServiceClient cmd_client;
         ros::Publisher local_vel_pub;
+        ros::ServiceClient cmd_client;
         ros::ServiceClient takeoffClient;
         ros::ServiceClient arming_client;
         ros::ServiceClient set_mode_client;
@@ -50,8 +54,9 @@ class MyClass{
         ros::NodeHandle  nh;
         mavros_msgs::State current_state;
 
-        double lat, lon, alt;
-
+        double lat, lon, alt, x, y, z, newLatitude, newLongitude;
+        const double R = 6371000.0;
+        
 };
 
 
