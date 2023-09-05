@@ -4,6 +4,10 @@
 #include <ros/ros.h>
 #include <math.h>
 #include <cmath>
+#include <thread>
+#include <mutex>
+#include <vector>
+#include <csignal>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <mavros_msgs/CommandBool.h>
@@ -54,9 +58,21 @@ class MyClass{
         ros::NodeHandle  nh;
         mavros_msgs::State current_state;
 
+        ros::Subscriber state_sub1;
+        ros::Subscriber gps_sub1;
+        ros::Subscriber odom_sub1;
+        ros::Publisher attitude_pub1;
+        ros::Publisher local_vel_pub1;
+        ros::ServiceClient cmd_client1;
+        ros::ServiceClient takeoffClient1;
+        ros::ServiceClient arming_client1;
+        ros::ServiceClient set_mode_client1;
+        ros::ServiceClient set_param_vel1;
+        mavros_msgs::State current_state1;
+
         double lat, lon, alt, x, y, z, newLatitude, newLongitude;
         const double R = 6371000.0;
-        
+
 };
 
 

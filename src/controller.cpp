@@ -3,18 +3,31 @@
 MyClass::MyClass(ros::NodeHandle &nodehandle) : nh(nodehandle)
 {
 
-    state_sub       = nh.subscribe<mavros_msgs::State>("uav0/mavros/state", 10, &MyClass::state_cb, this);
-    gps_sub         = nh.subscribe<sensor_msgs::NavSatFix>("uav0/mavros/global_position/global", 10, &MyClass::gpsCallback, this);
-    odom_sub        = nh.subscribe<nav_msgs::Odometry>("uav0/mavros/local_position/odom", 10, &MyClass::odomCallback, this);
+    state_sub        = nh.subscribe<mavros_msgs::State>("uav0/mavros/state", 10, &MyClass::state_cb, this);
+    gps_sub          = nh.subscribe<sensor_msgs::NavSatFix>("uav0/mavros/global_position/global", 10, &MyClass::gpsCallback, this);
+    odom_sub         = nh.subscribe<nav_msgs::Odometry>("uav0/mavros/local_position/odom", 10, &MyClass::odomCallback, this);
 
-    attitude_pub    = nh.advertise<mavros_msgs::AttitudeTarget>("uav0/mavros/setpoint_raw/attitude", 10);
-    local_vel_pub   = nh.advertise<geometry_msgs::TwistStamped>("uav0/mavros/setpoint_velocity/cmd_vel", 10);
+    attitude_pub     = nh.advertise<mavros_msgs::AttitudeTarget>("uav0/mavros/setpoint_raw/attitude", 10);
+    local_vel_pub    = nh.advertise<geometry_msgs::TwistStamped>("uav0/mavros/setpoint_velocity/cmd_vel", 10);
 
-    cmd_client      = nh.serviceClient<mavros_msgs::CommandLong>("uav0/mavros/cmd/command", 10);
-    takeoffClient   = nh.serviceClient<mavros_msgs::CommandTOL>("uav0/mavros/cmd/takeoff");
-    arming_client   = nh.serviceClient<mavros_msgs::CommandBool>("uav0/mavros/cmd/arming");
-    set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("uav0/mavros/set_mode");
-    set_param_vel   = nh.serviceClient<mavros_msgs::ParamSet>("uav0/mavros/param/set");
+    cmd_client       = nh.serviceClient<mavros_msgs::CommandLong>("uav0/mavros/cmd/command", 10);
+    takeoffClient    = nh.serviceClient<mavros_msgs::CommandTOL>("uav0/mavros/cmd/takeoff");
+    arming_client    = nh.serviceClient<mavros_msgs::CommandBool>("uav0/mavros/cmd/arming");
+    set_mode_client  = nh.serviceClient<mavros_msgs::SetMode>("uav0/mavros/set_mode");
+    set_param_vel    = nh.serviceClient<mavros_msgs::ParamSet>("uav0/mavros/param/set");
+
+    state_sub1       = nh.subscribe<mavros_msgs::State>("uav1/mavros/state", 10, &MyClass::state_cb, this);
+    gps_sub1         = nh.subscribe<sensor_msgs::NavSatFix>("uav1/mavros/global_position/global", 10, &MyClass::gpsCallback, this);
+    odom_sub1        = nh.subscribe<nav_msgs::Odometry>("uav1/mavros/local_position/odom", 10, &MyClass::odomCallback, this);
+
+    attitude_pub1    = nh.advertise<mavros_msgs::AttitudeTarget>("uav1/mavros/setpoint_raw/attitude", 10);
+    local_vel_pub1   = nh.advertise<geometry_msgs::TwistStamped>("uav1/mavros/setpoint_velocity/cmd_vel", 10);
+
+    cmd_client1      = nh.serviceClient<mavros_msgs::CommandLong>("uav1/mavros/cmd/command", 10);
+    takeoffClient1   = nh.serviceClient<mavros_msgs::CommandTOL>("uav1/mavros/cmd/takeoff");
+    arming_client1   = nh.serviceClient<mavros_msgs::CommandBool>("uav1/mavros/cmd/arming");
+    set_mode_client1 = nh.serviceClient<mavros_msgs::SetMode>("uav1/mavros/set_mode");
+    set_param_vel1   = nh.serviceClient<mavros_msgs::ParamSet>("uav1/mavros/param/set");
 
 }
 
