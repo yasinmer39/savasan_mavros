@@ -2,6 +2,7 @@
 2024 Savaşan İHA yarışması için denenen, PX4 SITL ile konuşmak için MAVROS tabanlı ana kod döngüsü.
 
 Use this shell script (.sh) in order to run gazebo simulation easily with fixed-winged aircraft(s):
+
 #!/bin/bash
 
 cd ~/PX4-Autopilot/
