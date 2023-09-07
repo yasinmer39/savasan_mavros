@@ -1,37 +1,6 @@
 #include <controller.hpp>
 
-MyClass::MyClass(ros::NodeHandle &nodehandle) : nh(nodehandle)
-{
-
-    state_sub        = nh.subscribe<mavros_msgs::State>("uav0/mavros/state", 10, &MyClass::state_cb, this);
-    gps_sub          = nh.subscribe<sensor_msgs::NavSatFix>("uav0/mavros/global_position/global", 10, &MyClass::gpsCallback, this);
-    odom_sub         = nh.subscribe<nav_msgs::Odometry>("uav0/mavros/local_position/odom", 10, &MyClass::odomCallback, this);
-
-    attitude_pub     = nh.advertise<mavros_msgs::AttitudeTarget>("uav0/mavros/setpoint_raw/attitude", 10);
-    local_vel_pub    = nh.advertise<geometry_msgs::TwistStamped>("uav0/mavros/setpoint_velocity/cmd_vel", 10);
-
-    cmd_client       = nh.serviceClient<mavros_msgs::CommandLong>("uav0/mavros/cmd/command", 10);
-    takeoffClient    = nh.serviceClient<mavros_msgs::CommandTOL>("uav0/mavros/cmd/takeoff");
-    arming_client    = nh.serviceClient<mavros_msgs::CommandBool>("uav0/mavros/cmd/arming");
-    set_mode_client  = nh.serviceClient<mavros_msgs::SetMode>("uav0/mavros/set_mode");
-    set_param_vel    = nh.serviceClient<mavros_msgs::ParamSet>("uav0/mavros/param/set");
-
-    state_sub1       = nh.subscribe<mavros_msgs::State>("uav1/mavros/state", 10, &MyClass::state_cb, this);
-    gps_sub1         = nh.subscribe<sensor_msgs::NavSatFix>("uav1/mavros/global_position/global", 10, &MyClass::gpsCallback, this);
-    odom_sub1        = nh.subscribe<nav_msgs::Odometry>("uav1/mavros/local_position/odom", 10, &MyClass::odomCallback, this);
-
-    attitude_pub1    = nh.advertise<mavros_msgs::AttitudeTarget>("uav1/mavros/setpoint_raw/attitude", 10);
-    local_vel_pub1   = nh.advertise<geometry_msgs::TwistStamped>("uav1/mavros/setpoint_velocity/cmd_vel", 10);
-
-    cmd_client1      = nh.serviceClient<mavros_msgs::CommandLong>("uav1/mavros/cmd/command", 10);
-    takeoffClient1   = nh.serviceClient<mavros_msgs::CommandTOL>("uav1/mavros/cmd/takeoff");
-    arming_client1   = nh.serviceClient<mavros_msgs::CommandBool>("uav1/mavros/cmd/arming");
-    set_mode_client1 = nh.serviceClient<mavros_msgs::SetMode>("uav1/mavros/set_mode");
-    set_param_vel1   = nh.serviceClient<mavros_msgs::ParamSet>("uav1/mavros/param/set");
-
-}
-
-void MyClass::takeoff(double alt , ros::ServiceClient &arming_client, ros::ServiceClient &takeoffClient)
+void MyClass::takeoff(double alt, ros::ServiceClient &arming_client, ros::ServiceClient &takeoffClient)
 {
 
     mavros_msgs::CommandBool arm_cmd;
@@ -52,7 +21,6 @@ void MyClass::takeoff(double alt , ros::ServiceClient &arming_client, ros::Servi
     }
 
     ros::Duration(6).sleep();
-
 }
 
 void MyClass::velocityInput(double x, double y, double z, ros::Publisher &local_vel_pub)
@@ -64,24 +32,31 @@ void MyClass::velocityInput(double x, double y, double z, ros::Publisher &local_
     twist.twist.linear.z = z;
 
     local_vel_pub.publish(twist);
-
 }
 
-void MyClass::orbit(float radius, float velocity, float yaw_behavior, float orbits, float lat, float lon, float alt, ros::ServiceClient &cmd_client)
+void MyClass::orbit(float radius, float velocity, float yaw_behavior, float orbits, float lat, float lon, float alt, float xOffsetMeters, float yOffsetMeters, ros::ServiceClient &cmd_client)
 {
+
+    double lat_rad = lat * M_PI / 180.0;
+    double lon_rad = lon * M_PI / 180.0;
+
+    double latDistance = yOffsetMeters / R;
+    double lonDistance = xOffsetMeters / (R * cos(lat_rad));
+
+    double newLatRad = lat_rad + latDistance;
+    double newLonRad = lon_rad + lonDistance;
 
     mavros_msgs::CommandLong cmd_msg;
     cmd_msg.request.command = 34;
-    cmd_msg.request.param1  = radius;
-    cmd_msg.request.param2  = velocity;
-    cmd_msg.request.param3  = yaw_behavior;
-    cmd_msg.request.param4  = orbits;
-    cmd_msg.request.param5  = lat;
-    cmd_msg.request.param6  = lon;
-    cmd_msg.request.param7  = alt;
+    cmd_msg.request.param1 = radius;
+    cmd_msg.request.param2 = velocity;
+    cmd_msg.request.param3 = yaw_behavior;
+    cmd_msg.request.param4 = orbits;
+    cmd_msg.request.param5 = newLatRad * 180.0 / M_PI;
+    cmd_msg.request.param6 = newLonRad * 180.0 / M_PI;
+    cmd_msg.request.param7 = alt;
 
     cmd_client.call(cmd_msg);
-
 }
 
 void MyClass::attitude(double roll, double pitch, float thrust, ros::Publisher &attitude_pub)
@@ -95,7 +70,7 @@ void MyClass::attitude(double roll, double pitch, float thrust, ros::Publisher &
     attitude_setpoint.orientation.y = quaternion.y();
     attitude_setpoint.orientation.z = quaternion.z();
     attitude_setpoint.orientation.w = quaternion.w();
-    attitude_setpoint.thrust        = thrust; /*thrust 0-1 arasında*/
+    attitude_setpoint.thrust = thrust; /*thrust 0-1 arasında*/
 
     attitude_pub.publish(attitude_setpoint);
 }
@@ -160,9 +135,9 @@ void MyClass::paramSet(double vel, ros::ServiceClient &set_mode_client, ros::Ser
 void MyClass::gpsCallback(const sensor_msgs::NavSatFix::ConstPtr &gps_msg)
 {
 
-    lat = gps_msg->latitude;
-    lon = gps_msg->longitude;
-    alt = gps_msg->altitude;
+    gps_lat = gps_msg->latitude;
+    gps_lon = gps_msg->longitude;
+    gps_alt = gps_msg->altitude;
 
 }
 
@@ -180,8 +155,9 @@ void MyClass::odomCallback(const nav_msgs::Odometry::ConstPtr &odom_msg)
     ros::spinOnce();
 }
 
-void MyClass::metersToLatitudeLongitude(double originLat, double originLon, double xOffsetMeters, double yOffsetMeters, double& newLat, double& newLon) {
-    
+/*void MyClass::metersToLatitudeLongitude(double originLat, double originLon, double xOffsetMeters, double yOffsetMeters, double &newLat, double &newLon)
+{
+
     double originLatRad = originLat * M_PI / 180.0;
     double originLonRad = originLon * M_PI / 180.0;
 
@@ -193,7 +169,6 @@ void MyClass::metersToLatitudeLongitude(double originLat, double originLon, doub
 
     newLat = newLatRad * 180.0 / M_PI;
     newLon = newLonRad * 180.0 / M_PI;
-
-}
+}*/
 
 // MAV_CMD_NAV_LOITER_TO_ALT belli bir yüksekliğe loiter atarak yükseliyor kaçış için kullanılabilir.
