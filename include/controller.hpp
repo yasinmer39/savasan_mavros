@@ -7,6 +7,7 @@
 #include <thread>
 #include <mutex>
 #include <vector>
+#include <cstdlib>
 #include <condition_variable>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
@@ -23,6 +24,7 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <nav_msgs/Odometry.h>
+#include <beginner_tutorials/Telemetry.h>
 
 class MyClass{
 
@@ -38,26 +40,26 @@ class MyClass{
 
             base_topic = "uav" + std::to_string(id);
 
-            state_sub = nh.subscribe<mavros_msgs::State>(getState(), 10, &MyClass::state_cb, this);
-            gps_sub = nh.subscribe<sensor_msgs::NavSatFix>(getGPS(), 10, &MyClass::gpsCallback, this);
-            odom_sub = nh.subscribe<nav_msgs::Odometry>(getOdom(), 10, &MyClass::odomCallback, this);
+            state_sub       = nh.subscribe<mavros_msgs::State>(getState(), 10, &MyClass::state_cb, this);
+            gps_sub         = nh.subscribe<sensor_msgs::NavSatFix>(getGPS(), 10, &MyClass::gpsCallback, this);
+            odom_sub        = nh.subscribe<nav_msgs::Odometry>(getOdom(), 10, &MyClass::odomCallback, this);
 
-            attitude_pub = nh.advertise<mavros_msgs::AttitudeTarget>(getAtt(), 10);
-            local_vel_pub = nh.advertise<geometry_msgs::TwistStamped>(getVel(), 10);
+            attitude_pub    = nh.advertise<mavros_msgs::AttitudeTarget>(getAtt(), 10);
+            local_vel_pub   = nh.advertise<geometry_msgs::TwistStamped>(getVel(), 10);
 
-            cmd_client = nh.serviceClient<mavros_msgs::CommandLong>(getCL(), 10);
-            takeoffClient = nh.serviceClient<mavros_msgs::CommandTOL>(getCT());
-            arming_client = nh.serviceClient<mavros_msgs::CommandBool>(getCB());
+            cmd_client      = nh.serviceClient<mavros_msgs::CommandLong>(getCL(), 10);
+            takeoffClient   = nh.serviceClient<mavros_msgs::CommandTOL>(getCT());
+            arming_client   = nh.serviceClient<mavros_msgs::CommandBool>(getCB());
             set_mode_client = nh.serviceClient<mavros_msgs::SetMode>(getMode());
-            set_param_vel = nh.serviceClient<mavros_msgs::ParamSet>(getParam());
-
+            set_param_vel   = nh.serviceClient<mavros_msgs::ParamSet>(getParam());
+            
         };
         MyClass(MyClass& myclass) = default;
         MyClass(MyClass&& rhs) = default;
         ~MyClass() = default;
 
         std::string getState(){
-            return base_topic + "mavros/state";
+            return base_topic + "/mavros/state";
         }
         std::string getGPS(){
             return base_topic + "/mavros/global_position/global";

@@ -1,0 +1,32 @@
+[
+  {
+    "takim_numarasi": 0,
+    "iha_enlem": 47.3977418,
+    "iha_boylam": 8.545594,
+    "iha_irtifa": 535.2149155171159,
+    "iha_dikilme": 0.36374685631263554,
+    "iha_yonelme": 90.82628494666903,
+    "iha_yatis": -0.44528248705166756,
+    "zaman_farki": 0
+  },
+  {
+    "takim_numarasi": 1,
+    "iha_enlem": 47.3977417,
+    "iha_boylam": 8.5456338,
+    "iha_irtifa": 535.2078599559029,
+    "iha_dikilme": 1.1451077545838568,
+    "iha_yonelme": 91.98181478375304,
+    "iha_yatis": -0.8312823259128304,
+    "zaman_farki": 0
+  },
+  {
+    "takim_numarasi": 2,
+    "iha_enlem": 47.3977419,
+    "iha_boylam": 8.5456741,
+    "iha_irtifa": 535.2048038372478,
+    "iha_dikilme": 1.1393800188476333,
+    "iha_yonelme": 92.04652930849869,
+    "iha_yatis": -0.8391143235030577,
+    "zaman_farki": 0
+  }
+]

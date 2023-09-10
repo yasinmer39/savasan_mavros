@@ -1,14 +1,33 @@
 #include "controller.hpp"
 
-std::mutex m;
-std::condition_variable cv;
-bool ready = false;
-
 int main(int argc, char **argv)
 {
 
     ros::init(argc, argv, "offb_node");
+    
     ros::NodeHandle nh;
+
+        try
+    {
+        // Create the rosservice client
+        ros::ServiceClient stringServiceClient = nh.serviceClient<beginner_tutorials::Telemetry>("/string_service");
+        beginner_tutorials::Telemetry srv;
+
+        // Send the request to the rosservice server and receive the response
+        if (stringServiceClient.call(srv))
+        {
+            ROS_INFO("Received string data: %s", srv.response.response_data.c_str());
+        }
+        else
+        {
+            ROS_ERROR("Failed to call rosservice");
+        }
+    }
+    catch (ros::Exception& e)
+    {
+        ROS_ERROR("Service call failed: %s", e.what());
+    }
+
 
     MyClass uav0{nh, 0};
     MyClass uav1{nh, 1};
@@ -20,6 +39,7 @@ int main(int argc, char **argv)
     MyClass uav7{nh, 7};
     MyClass uav8{nh, 8};
     MyClass uav9{nh, 9};
+
 
     std::thread uav0_param(&MyClass::paramSet, &uav0, 16.0, std::ref(uav0.set_mode_client), std::ref(uav0.set_param_vel));
     std::thread uav1_param(&MyClass::paramSet, &uav1, 16.0, std::ref(uav1.set_mode_client), std::ref(uav1.set_param_vel));
@@ -33,13 +53,13 @@ int main(int argc, char **argv)
     std::thread uav1_orbit(&MyClass::orbit, &uav1, 200.0, 15.0, 0.0, 0.0, uav1.gps_lat, uav1.gps_lon, uav1.gps_alt, -200.0, -200.0, std::ref(uav1.cmd_client));
     uav0_orbit.join();
     uav1_orbit.join();
-
-    while(ros::ok){
+    ros::Rate ros_sleep{10};
+    while (ros::ok)
+    {
 
         ros::spinOnce();
-        
+        ros_sleep.sleep();
     }
 
     return 0;
-
 }
