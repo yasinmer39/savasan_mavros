@@ -9,6 +9,7 @@
 #include <vector>
 #include <cstdlib>
 #include <condition_variable>
+#include <nlohmann/json.hpp>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <mavros_msgs/CommandBool.h>
@@ -25,6 +26,8 @@
 #include <sensor_msgs/NavSatFix.h>
 #include <nav_msgs/Odometry.h>
 #include <beginner_tutorials/Telemetry.h>
+#include <GeographicLib/Geocentric.hpp>
+#include <GeographicLib/LocalCartesian.hpp>
 
 class MyClass{
 
@@ -52,6 +55,7 @@ class MyClass{
             arming_client   = nh.serviceClient<mavros_msgs::CommandBool>(getCB());
             set_mode_client = nh.serviceClient<mavros_msgs::SetMode>(getMode());
             set_param_vel   = nh.serviceClient<mavros_msgs::ParamSet>(getParam());
+            stringServiceClient = nh.serviceClient<beginner_tutorials::Telemetry>("/string_service");
             
         };
         MyClass(MyClass& myclass) = default;
@@ -90,7 +94,7 @@ class MyClass{
         }
       
         void takeoff(double alt, ros::ServiceClient& arming_client, ros::ServiceClient& takeoffClient);
-        void velocityInput(double x, double y, double z, ros::Publisher& local_vel_pub);
+        void velocityInput(double x, double y, double z, ros::Publisher& local_vel_pub, ros::ServiceClient &set_param_vel);
         void orbit(float radius, float velocity, float yaw_behavior, float orbits, float lat, float lon, float alt, float xOffsetMeters, float yOffsetMeters, ros::ServiceClient& cmd_client);
         void attitude(double roll, double pitch, float thrust, ros::Publisher& attitude_pub);
         void setOffboard(mavros_msgs::State& current_state, ros::ServiceClient& set_mode_client);
@@ -100,6 +104,8 @@ class MyClass{
         void state_cb(const mavros_msgs::State::ConstPtr& msg);
         void odomCallback(const nav_msgs::Odometry::ConstPtr& odom_msg);
         void metersToLatitudeLongitude(double originLat, double originLon, double xOffsetMeters, double yOffsetMeters, double& newLat, double& newLon);
+        void serverRead(ros::ServiceClient &stringServiceClient);
+        void dogfightVector(double uav0_lat, double uav0_lon, double uav1_lat, double uav1_lon);
 
         ros::Subscriber state_sub;
         ros::Subscriber gps_sub;
@@ -111,12 +117,16 @@ class MyClass{
         ros::ServiceClient arming_client;
         ros::ServiceClient set_mode_client;
         ros::ServiceClient set_param_vel;
+        ros::ServiceClient stringServiceClient;
         ros::NodeHandle  nh;
         mavros_msgs::State current_state;
+        beginner_tutorials::Telemetry srv;
+
+        std::vector<std::vector<float>> teams_info;
 
         double lat, lon, alt, x, y, z, newLatitude, newLongitude, gps_lat, gps_lon, gps_alt;
-        const double R = 6371000.0;   
-
+        const double R = 6371000.0;
+ 
 };
 
 

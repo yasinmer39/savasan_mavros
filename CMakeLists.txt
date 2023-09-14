@@ -16,6 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   sensor_msgs
   nav_msgs
+  
+  
 )
 
 ## System dependencies are found with CMake's conventions
@@ -154,6 +156,7 @@ add_dependencies(offb_node beginner_tutorials_generate_messages_cpp)
 
 add_executable(main src/main.cpp)
 target_link_libraries(main ${catkin_LIBRARIES} api)
+
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}

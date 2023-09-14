@@ -1,5 +1,27 @@
 #include <controller.hpp>
 
+/*UÇUŞ KONTROLCÜLERİ ÇAĞIRMA FONKSİYONLARI*/
+void MyClass::paramSet(double vel, ros::ServiceClient &set_mode_client, ros::ServiceClient &set_param_vel)
+{
+
+    mavros_msgs::ParamValue vel_const;
+    vel_const.real = vel;
+    mavros_msgs::ParamSet offb_param_set;
+    offb_param_set.request.param_id = "FW_AIRSPD_TRIM";
+    offb_param_set.request.value = vel_const;
+
+    while (offb_param_set.response.success != true)
+    {
+        set_param_vel.call(offb_param_set);
+        ros::Duration(1.5).sleep();
+        ros::spinOnce();
+        if (offb_param_set.response.success == true)
+        {
+            ROS_INFO("Velocity parameter set successfully.");
+        }
+    }
+}
+
 void MyClass::takeoff(double alt, ros::ServiceClient &arming_client, ros::ServiceClient &takeoffClient)
 {
 
@@ -23,8 +45,13 @@ void MyClass::takeoff(double alt, ros::ServiceClient &arming_client, ros::Servic
     ros::Duration(6).sleep();
 }
 
-void MyClass::velocityInput(double x, double y, double z, ros::Publisher &local_vel_pub)
+void MyClass::velocityInput(double x, double y, double z, ros::Publisher &local_vel_pub, ros::ServiceClient &set_param_vel)
 {
+    mavros_msgs::ParamValue vel_const;
+    vel_const.real = sqrt(x*x + y*y);
+    mavros_msgs::ParamSet offb_param_set;
+    offb_param_set.request.param_id = "FW_AIRSPD_TRIM";
+    offb_param_set.request.value = vel_const;
 
     geometry_msgs::TwistStamped twist;
     twist.twist.linear.x = x;
@@ -32,6 +59,10 @@ void MyClass::velocityInput(double x, double y, double z, ros::Publisher &local_
     twist.twist.linear.z = z;
 
     local_vel_pub.publish(twist);
+    set_param_vel.call(offb_param_set);
+    
+    ros::spinOnce();
+  
 }
 
 void MyClass::orbit(float radius, float velocity, float yaw_behavior, float orbits, float lat, float lon, float alt, float xOffsetMeters, float yOffsetMeters, ros::ServiceClient &cmd_client)
@@ -73,22 +104,19 @@ void MyClass::attitude(double roll, double pitch, float thrust, ros::Publisher &
     attitude_setpoint.thrust = thrust; /*thrust 0-1 arasında*/
 
     attitude_pub.publish(attitude_setpoint);
+    ros::spinOnce();
+
 }
 
+/*UÇUŞ MODU AYARLAMA FONKSİYONLARI*/
 void MyClass::setOffboard(mavros_msgs::State &current_state, ros::ServiceClient &set_mode_client)
 {
+    mavros_msgs::SetMode offb_set_mode;
+    offb_set_mode.request.custom_mode = "OFFBOARD";
 
-    if (current_state.mode != "OFFBOARD")
-    {
-        mavros_msgs::SetMode set_mode;
-        set_mode.request.custom_mode = "OFFBOARD";
-        if (set_mode_client.call(set_mode) && set_mode.response.mode_sent)
-        {
-            ROS_INFO("Switched to OFFBOARD mode");
-        }
-        else
-        {
-            ROS_ERROR("Failed to switch to OFFBOARD mode");
+    if(current_state.mode != "OFFBOARD"){
+        if(set_mode_client.call(offb_set_mode)){
+            ROS_INFO("Ofbboard enabled");
         }
     }
 }
@@ -111,34 +139,13 @@ void MyClass::holdMode(mavros_msgs::State &current_state, ros::ServiceClient &ho
     }
 }
 
-void MyClass::paramSet(double vel, ros::ServiceClient &set_mode_client, ros::ServiceClient &set_param_vel)
-{
-
-    mavros_msgs::ParamValue vel_const;
-    vel_const.real = vel;
-    mavros_msgs::ParamSet offb_param_set;
-    offb_param_set.request.param_id = "FW_AIRSPD_TRIM";
-    offb_param_set.request.value = vel_const;
-
-    while (offb_param_set.response.success != true)
-    {
-        set_param_vel.call(offb_param_set);
-        ros::Duration(1.5).sleep();
-        ros::spinOnce();
-        if (offb_param_set.response.success == true)
-        {
-            ROS_INFO("Velocity parameter set successfully.");
-        }
-    }
-}
-
+/*CALLBACK FONKSİYONLARI*/
 void MyClass::gpsCallback(const sensor_msgs::NavSatFix::ConstPtr &gps_msg)
 {
 
     gps_lat = gps_msg->latitude;
     gps_lon = gps_msg->longitude;
     gps_alt = gps_msg->altitude;
-
 }
 
 void MyClass::state_cb(const mavros_msgs::State::ConstPtr &msg)
@@ -155,7 +162,50 @@ void MyClass::odomCallback(const nav_msgs::Odometry::ConstPtr &odom_msg)
     ros::spinOnce();
 }
 
-/*void MyClass::metersToLatitudeLongitude(double originLat, double originLon, double xOffsetMeters, double yOffsetMeters, double &newLat, double &newLon)
+void MyClass::serverRead(ros::ServiceClient &stringServiceClient)
+{
+
+    try
+    {
+        if (stringServiceClient.call(srv))
+        {
+            ROS_INFO("Received string data: %s", srv.response.response_data.c_str());
+            nlohmann::json jsonData = nlohmann::json::parse(srv.response.response_data.c_str());
+
+            for (const auto &item : jsonData)
+            {
+
+                std::vector<float> team_info;
+
+                team_info.push_back(item["takim_numarasi"]);
+                team_info.push_back(item["iha_enlem"]);
+                team_info.push_back(item["iha_boylam"]);
+                team_info.push_back(item["iha_irtifa"]);
+                team_info.push_back(item["iha_dikilme"]);
+                team_info.push_back(item["iha_yonelme"]);
+                team_info.push_back(item["iha_yatis"]);
+                team_info.push_back(item["iha_x"]);
+                team_info.push_back(item["iha_y"]);
+                team_info.push_back(item["iha_z"]);
+                team_info.push_back(item["zaman_farki"]);
+
+                teams_info.push_back(team_info);
+            }
+        }
+        else
+        {
+            ROS_ERROR("Failed to call rosservice");
+        }
+    }
+    catch (ros::Exception &e)
+    {
+        ROS_ERROR("Service call failed: %s", e.what());
+    }
+
+    std::cout << "request" << std::endl;
+}
+
+void MyClass::metersToLatitudeLongitude(double originLat, double originLon, double xOffsetMeters, double yOffsetMeters, double &newLat, double &newLon)
 {
 
     double originLatRad = originLat * M_PI / 180.0;
@@ -169,6 +219,6 @@ void MyClass::odomCallback(const nav_msgs::Odometry::ConstPtr &odom_msg)
 
     newLat = newLatRad * 180.0 / M_PI;
     newLon = newLonRad * 180.0 / M_PI;
-}*/
+}
 
 // MAV_CMD_NAV_LOITER_TO_ALT belli bir yüksekliğe loiter atarak yükseliyor kaçış için kullanılabilir.

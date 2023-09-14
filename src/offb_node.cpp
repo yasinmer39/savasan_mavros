@@ -53,17 +53,12 @@ int main(int argc, char **argv)
         rate.sleep();
     }
 
-    /*geometry_msgs::PoseStamped pose;
-    pose.pose.position.x = 0;
-    pose.pose.position.y = 0;
-    pose.pose.position.z = 0;*/
+    geometry_msgs::TwistStamped twist;
+    twist.twist.linear.x = 25;
+    twist.twist.linear.y = -25;
+    twist.twist.linear.z = 0;
 
-    /*geometry_msgs::TwistStamped twist;
-    twist.twist.linear.x = 20;
-    twist.twist.linear.y = 20;
-    twist.twist.linear.z = 0;*/
-
-    double roll = 30.0;
+    /*double roll = 30.0;
     double pitch = -20.0;
 
     double rolldeg = roll*3.14/180;
@@ -81,13 +76,13 @@ int main(int argc, char **argv)
     attitude_setpoint.orientation.x = x;
     attitude_setpoint.orientation.y = y;
     attitude_setpoint.orientation.z = z;
-    attitude_setpoint.thrust = 0.5;
-    attitude_setpoint.orientation.w = w; // Quaternion scalar (set to one for planes)
+    attitude_setpoint.thrust = 1.0;
+    attitude_setpoint.orientation.w = w; // Quaternion scalar (set to one for planes)*/
     //send a few setpoints before starting
     for(int i = 100; ros::ok() && i > 0; --i){
-        //local_vel_pub.publish(twist);
+        local_vel_pub.publish(twist);
         //local_pos_pub.publish(pose);
-        attitude_pub.publish(attitude_setpoint);
+        //attitude_pub.publish(attitude_setpoint);
         //cmd_client.call(cmd_msg);
         ros::spinOnce();
         rate.sleep();
@@ -146,9 +141,9 @@ int main(int argc, char **argv)
             }
         }
 
-        /*local_vel_pub.publish(twist);
-        local_pos_pub.publish(pose);*/
-        attitude_pub.publish(attitude_setpoint);
+        //local_vel_pub.publish(twist);
+        //local_pos_pub.publish(pose);
+        //attitude_pub.publish(attitude_setpoint);
         //cmd_client.call(cmd_msg);
         ros::spinOnce();
         rate.sleep();
